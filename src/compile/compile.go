@@ -115,6 +115,15 @@ func (c *MultiCompiler) Compile() error {
 
 	c.Log.Info(fmt.Sprintf(" EXISTING DEP DIRS: %+v\n", c.ExistingDepsDirs))
 
+	for _, element := range c.ExistingDepsDirs {
+		files, err := filepath.Glob(element+"/*")
+		if err != nil {
+			c.Log.Error("Unable to enumerate existing dirs: %s", err.Error())
+		} else {
+			c.Log.Info(fmt.Sprintf("%v", files))
+		}
+	}
+
 	c.Runner = buildpackrunner.New(&config)
 
 	stagingInfoFile, err := c.RunBuildpacks()
