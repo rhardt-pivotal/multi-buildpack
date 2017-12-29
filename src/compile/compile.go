@@ -37,11 +37,15 @@ func main() {
 		os.Exit(8)
 	}
 
+	logger.Info("Buildpack Dir: "+buildpackDir)
+
 	manifest, err := libbuildpack.NewManifest(buildpackDir, logger, time.Now())
 	if err != nil {
 		logger.Error("Unable to load buildpack manifest: %s", err.Error())
 		os.Exit(9)
 	}
+
+	logger.Info(fmt.Sprintf(" MANIFEST: %+v\n", manifest))
 
 	stager := libbuildpack.NewStager(os.Args[1:], logger, manifest)
 	err = stager.CheckBuildpackValid()
@@ -49,15 +53,22 @@ func main() {
 		os.Exit(10)
 	}
 
+	logger.Info(fmt.Sprintf(" STAGER: %+v\n", stager))
+
+
 	buildpacks, err := GetBuildpacks(stager.BuildDir(), logger)
 	if err != nil {
 		os.Exit(11)
 	}
 
+	logger.Info(fmt.Sprintf(" BUILDPACKS: %v\n", buildpacks))
+
 	mc, err := NewMultiCompiler(stager.BuildDir(), stager.CacheDir(), buildpacks, logger)
 	if err != nil {
 		os.Exit(12)
 	}
+
+	logger.Info(fmt.Sprintf(" MC: %+v\n", mc))
 
 	err = mc.Compile()
 	if err != nil {
@@ -87,6 +98,9 @@ func NewMultiCompiler(buildDir, cacheDir string, buildpacks []string, logger *li
 
 // Compile this buildpack
 func (c *MultiCompiler) Compile() error {
+
+	c.Log.Info("IN Compile()")
+
 	config, err := c.NewLifecycleBuilderConfig()
 	if err != nil {
 		c.Log.Error("Unable to set up runner config: %s", err.Error())
@@ -98,6 +112,8 @@ func (c *MultiCompiler) Compile() error {
 		c.Log.Error("Unable to locate directories: %s", err.Error())
 		return err
 	}
+
+	c.Log.Info(fmt.Sprintf(" EXISTING DEP DIRS: %+v\n", c.ExistingDepsDirs))
 
 	c.Runner = buildpackrunner.New(&config)
 
